@@ -6,8 +6,8 @@ from batchTag.src.readTags import listFilesInDir
 from batchTag.src.readTags import collectPresentTags
 from batchTag.src.readTags import deleteTags
 from batchTag.src.readTags import addTags
+from tkinter import filedialog
 
-dummyWorkingDir = "./"
 
 class TagSearchBox:
     def __init__(self, window):
@@ -136,6 +136,7 @@ class FileView:
         for iid in self.tree.selection():
             result.append(self.tree.item(iid)["text"])
         return result
+    
 class Gui:
     def __init__(self):
         self.window = tk.Tk()
@@ -143,96 +144,99 @@ class Gui:
         self.window.grid_columnconfigure(1,weight=1)
         self.window.grid_rowconfigure(1,weight=1)
         self.window.grid_rowconfigure(2,weight=2)
-        self.TagSearchBox = TagSearchBox(self.window)
+        self.tagSearchBox = TagSearchBox(self.window)
         self.availableTagView = TagListView(self.window)
         self.selectedTagView= TagListView(self.window)
-        self.FileView = FileView(self.window)      
-        self.FileView.tree.focus_set()
-        self.TagSearchBox.setPosition(0, 1)
+        self.fileView = FileView(self.window)      
+        self.fileView.tree.focus_set()
+        self.tagSearchBox.setPosition(0, 1)
         self.selectedTagView.setPosition(2, 2)
         self.availableTagView.setPosition(1, 1)
-        self.FileView.setPosition(2, 1)
+        self.fileView.setPosition(2, 1)
         self.buttonBox = ButtonBox(self.window)
         self.buttonBox.setPosition(1, 2)
         self.window.config(highlightbackground = "red", highlightcolor= "red")
     def initFocus(self):
-        self.FileView.setFocusOnFirstChild()
-        self.TagSearchBox.focus()
+        self.fileView.setFocusOnFirstChild()
+        self.tagSearchBox.focus()
         
 class GuiPresenter:
     def __init__(self):
-        self.Gui = Gui()
-        self.filesInCurrentWorkingDirectory = listFilesInDir(dummyWorkingDir)
+        self.gui = Gui()
+        self.filesInCurrentWorkingDirectory = listFilesInDir(workingDir)
         self.bindings()
         self.populateFileView()
         self.clearTagSelection()
-        self.Gui.initFocus()
-        self.Gui.window.mainloop()
+        self.gui.initFocus()
+        self.gui.window.mainloop()
     def selectTag(self, activeWidget):
         my_w = activeWidget.widget
         if len(my_w.curselection()) == 0:
-            self.Gui.TagSearchBox.focus()
+            self.gui.tagSearchBox.focus()
         index = int(my_w.curselection()[0])
         value = my_w.get(index) 
-        self.Gui.TagSearchBox.set("")
-        self.Gui.selectedTagView.listView.insert(0, value)
-        self.Gui.availableTagView.clear()
-        self.Gui.TagSearchBox.focus()
+        self.gui.tagSearchBox.set("")
+        self.gui.selectedTagView.listView.insert(0, value)
+        self.gui.availableTagView.clear()
+        self.gui.tagSearchBox.focus()
     def enterNewTag(self, event=None):
-        value = self.Gui.TagSearchBox.get()
+        value = self.gui.tagSearchBox.get()
         if value[1] != '#':
             value = '#' + value
-        self.Gui.selectedTagView.listView.insert(0, value)
-        self.Gui.TagSearchBox.set("")
+        self.gui.selectedTagView.listView.insert(0, value)
+        self.gui.tagSearchBox.set("")
     def moveTagSelectionDown(self, activeWidget):
-        self.Gui.availableTagView.focus()
-        self.Gui.availableTagView.selectFirstOption()
+        self.gui.availableTagView.focus()
+        self.gui.availableTagView.selectFirstOption()
     def moveTagSelectionUp(self, activeWidget):
-        self.Gui.TagSearchBox.focus()
-        self.Gui.availableTagView.clear()
+        self.gui.tagSearchBox.focus()
+        self.gui.availableTagView.clear()
     def unselectTag(self, activeWidget):
-        self.Gui.selectedTagView.deleteElement()
+        self.gui.selectedTagView.deleteElement()
     def clearFileSelection(self):
-        self.Gui.FileView.clearSelection()
+        self.gui.fileView.clearSelection()
     def clearTagSelection(self):
-        self.Gui.selectedTagView.clear()
+        self.gui.selectedTagView.clear()
         self.populateTagList()
     def addSelectedTagsToFiles(self):
-        fileList = self.Gui.FileView.selectionToList()
-        newTags = self.Gui.selectedTagView.toList()
+        fileList = self.gui.fileView.selectionToList()
+        newTags = self.gui.selectedTagView.toList()
         for file in fileList:
             print("adding to file " + file)
             addTags(file, newTags)
     def removeSelectedTagsFromFiles(self):
-        fileList = self.Gui.FileView.selectionToList()
-        newTags = self.Gui.selectedTagView.toList()
+        fileList = self.gui.fileView.selectionToList()
+        newTags = self.gui.selectedTagView.toList()
         for file in fileList:
             print("removing from file " + file)
             deleteTags(file, newTags)
     def populateTagList(self, *args):
         elementCandidats = collectPresentTags(self.filesInCurrentWorkingDirectory)
         elements = []
-        searchString = self.Gui.TagSearchBox.get()
-        self.Gui.availableTagView.clear()
+        searchString = self.gui.tagSearchBox.get()
+        self.gui.availableTagView.clear()
         for element in elementCandidats:
-            if(re.findall(searchString,element,re.IGNORECASE) and not self.Gui.selectedTagView.inList(element)):
+            if(re.findall(searchString,element,re.IGNORECASE) and not self.gui.selectedTagView.inList(element)):
                 elements.append(element)
-        self.Gui.availableTagView.populate(elements)
+        self.gui.availableTagView.populate(elements)
     def populateFileView(self):
         for file in self.filesInCurrentWorkingDirectory:
-            self.Gui.FileView.insert(file)
+            self.gui.fileView.insert(file)
     def bindings(self):
-        self.Gui.availableTagView.bind('<Escape>', self.moveTagSelectionUp)
-        self.Gui.availableTagView.bind('<Return>', self.selectTag)
-        self.Gui.TagSearchBox.bind('<Return>', self.enterNewTag)
-        self.Gui.TagSearchBox.bind('<Down>', self.moveTagSelectionDown)
-        self.Gui.selectedTagView.bind('<BackSpace>', self.Gui.selectedTagView.deleteSelectedElement)
-        self.Gui.TagSearchBox.setTrace(self.populateTagList)
-        self.Gui.buttonBox.button1.configure(command=self.clearTagSelection)
-        self.Gui.buttonBox.button2.configure(command=self.clearFileSelection)
-        self.Gui.buttonBox.button3.configure(command=self.addSelectedTagsToFiles)
-        self.Gui.buttonBox.button4.configure(command=self.removeSelectedTagsFromFiles)
-        self.Gui.window.bind("<Escape>", lambda x: self.Gui.window.destroy())    
+        self.gui.availableTagView.bind('<Escape>', self.moveTagSelectionUp)
+        self.gui.availableTagView.bind('<Return>', self.selectTag)
+        self.gui.tagSearchBox.bind('<Return>', self.enterNewTag)
+        self.gui.tagSearchBox.bind('<Down>', self.moveTagSelectionDown)
+        self.gui.selectedTagView.bind('<BackSpace>', self.gui.selectedTagView.deleteSelectedElement)
+        self.gui.tagSearchBox.setTrace(self.populateTagList)
+        self.gui.buttonBox.button1.configure(command=self.clearTagSelection)
+        self.gui.buttonBox.button2.configure(command=self.clearFileSelection)
+        self.gui.buttonBox.button3.configure(command=self.addSelectedTagsToFiles)
+        self.gui.buttonBox.button4.configure(command=self.removeSelectedTagsFromFiles)
+        self.gui.window.bind("<Escape>", lambda x: self.gui.window.destroy())    
         
-    
-GuiPresenter()
+   
+workingDir = "./"
+if __name__ == "__main__":
+    workingDir = filedialog.askdirectory()
+    GuiPresenter()

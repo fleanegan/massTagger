@@ -197,6 +197,12 @@ class GuiPresenter:
         for file in fileList:
             print("adding to file " + file)
             addTags(file, newTags)
+    def removeSelectedTagsFromFiles(self):
+        fileList = self.Gui.FileView.selectionToList()
+        newTags = self.Gui.selectedTagView.toList()
+        for file in fileList:
+            print("removing from file " + file)
+            deleteTags(file, newTags)
     def populateTagList(self, *args):
         elementCandidats = collectPresentTags(self.filesInCurrentWorkingDirectory)
         elements = []
@@ -218,6 +224,7 @@ class GuiPresenter:
         self.Gui.buttonBox.button1.configure(command=self.clearTagSelection)
         self.Gui.buttonBox.button2.configure(command=self.clearFileSelection)
         self.Gui.buttonBox.button3.configure(command=self.addSelectedTagsToFiles)
+        self.Gui.buttonBox.button4.configure(command=self.removeSelectedTagsFromFiles)
         self.Gui.window.bind("<Escape>", lambda x: self.Gui.window.destroy())    
         
     

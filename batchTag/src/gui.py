@@ -132,8 +132,10 @@ class FileView:
         for item in self.tree.selection():
             self.tree.selection_remove(item)
     def selectionToList(self):
-        return self.tree.selection()
-        
+        result = []
+        for iid in self.tree.selection():
+            result.append(self.tree.item(iid)["text"])
+        return result
 class Gui:
     def __init__(self):
         self.window = tk.Tk()
@@ -193,6 +195,7 @@ class GuiPresenter:
         fileList = self.Gui.FileView.selectionToList()
         newTags = self.Gui.selectedTagView.toList()
         for file in fileList:
+            print("adding to file " + file)
             addTags(file, newTags)
     def populateTagList(self, *args):
         elementCandidats = collectPresentTags(self.filesInCurrentWorkingDirectory)
@@ -214,6 +217,7 @@ class GuiPresenter:
         self.Gui.TagSearchBox.setTrace(self.populateTagList)
         self.Gui.buttonBox.button1.configure(command=self.clearTagSelection)
         self.Gui.buttonBox.button2.configure(command=self.clearFileSelection)
+        self.Gui.buttonBox.button3.configure(command=self.addSelectedTagsToFiles)
         self.Gui.window.bind("<Escape>", lambda x: self.Gui.window.destroy())    
         
     

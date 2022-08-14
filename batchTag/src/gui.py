@@ -178,6 +178,12 @@ class GuiPresenter:
         self.Gui.selectedTagView.listView.insert(0, value)
         self.Gui.availableTagView.clear()
         self.Gui.TagSearchBox.focus()
+    def enterNewTag(self, event=None):
+        value = self.Gui.TagSearchBox.get()
+        if value[1] != '#':
+            value = '#' + value
+        self.Gui.selectedTagView.listView.insert(0, value)
+        self.Gui.TagSearchBox.set("")
     def moveTagSelectionDown(self, activeWidget):
         self.Gui.availableTagView.focus()
         self.Gui.availableTagView.selectFirstOption()
@@ -218,6 +224,7 @@ class GuiPresenter:
     def bindings(self):
         self.Gui.availableTagView.bind('<Escape>', self.moveTagSelectionUp)
         self.Gui.availableTagView.bind('<Return>', self.selectTag)
+        self.Gui.TagSearchBox.bind('<Return>', self.enterNewTag)
         self.Gui.TagSearchBox.bind('<Down>', self.moveTagSelectionDown)
         self.Gui.selectedTagView.bind('<BackSpace>', self.Gui.selectedTagView.deleteSelectedElement)
         self.Gui.TagSearchBox.setTrace(self.populateTagList)

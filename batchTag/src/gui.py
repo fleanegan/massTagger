@@ -2,13 +2,15 @@ import tkinter as tk
 from tkinter import ttk
 import re # regular expression library 
 from tkinter import END
-from batchTag.src.readTags import listFilesInDir
-from batchTag.src.readTags import collectPresentTags
-from batchTag.src.readTags import deleteTags
-from batchTag.src.readTags import addTags
-from batchTag.src.readTags import findFiles
+from readTags import listFilesInDir
+from readTags import collectPresentTags
+from readTags import deleteTags
+from readTags import addTags
+from readTags import findFiles
 from tkinter import filedialog
-
+import subprocess
+import platform
+import os
 
 class TagSearchBox:
     def __init__(self, window):
@@ -97,11 +99,22 @@ class FileView:
             self.tree.focus(children[0])
         else:
             print("no children found")
+    def bind(self, pattern, function):
+        self.tree.bind(pattern, function)
     def setPosition(self, row, column):
         self.tree.grid(row=row, column=column,sticky='NSEW')
     def select(self, event=None):
         self.tree.selection_toggle(self.tree.focus())
         print (self.tree.selection())
+    def openFileUnderCursor(self, event=None):
+        filepath = self.tree.item(self.tree.focus())["text"]
+        print (filepath)
+        if platform.system() == 'Darwin':       # macOS
+            subprocess.call(('open', filepath))
+        elif platform.system() == 'Windows':    # Windows
+            os.startfile(filepath)
+        else:                                   # linux variants
+            subprocess.call(('xdg-open', filepath))
     def moveFocus(self, view, fetchingFunction):
         cur_item = view.focus()
         print("move focus")
@@ -201,6 +214,8 @@ class GuiPresenter:
         self.gui.selectedTagView.deleteElement()
     def clearFileSelection(self):
         self.gui.fileView.clearSelection()
+        self.gui.fileSearchBox.set("")
+        self.gui.fileView.populateFileView()
     def clearTagSelection(self):
         self.gui.selectedTagView.clear()
         self.populateTagList()
@@ -237,6 +252,7 @@ class GuiPresenter:
         self.gui.availableTagView.bind('<Escape>', self.moveTagSelectionUp)
         self.gui.availableTagView.bind('<Return>', self.selectTag)
         self.gui.fileSearchBox.bind('<Return>', self.populateFileView)
+        self.gui.fileView.bind('<Button-3>', self.gui.fileView.openFileUnderCursor)
         self.gui.tagSearchBox.bind('<Return>', self.enterNewTag)
         self.gui.tagSearchBox.bind('<Down>', self.moveTagSelectionDown)
         self.gui.selectedTagView.bind('<BackSpace>', self.gui.selectedTagView.deleteSelectedElement)

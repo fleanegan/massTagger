@@ -2,6 +2,7 @@ import glob
 import os.path
 import os
 import re
+from os.path import exists
 
 def listFilesInDir(directory):
     result = []
@@ -15,11 +16,12 @@ def listFilesInDir(directory):
 def collectPresentTags(files):
     result = []
     for textFile in files:
-        with open(textFile,'r') as file:
-            for line in file:
-                for word in line.split():
-                    if (line[0] == '#'):
-                        result.append(word)
+        if exists(textFile):
+            with open(textFile,'r') as file:
+                for line in file:
+                    for word in line.split():
+                        if (line[0] == '#'):
+                            result.append(word)
     result = list(set(result)) # removing douplicates
     return result
 
@@ -38,12 +40,13 @@ def deleteTags(fileName, listOfTags):
         file.writelines(result)
 
 def addTags(fileName, listOfTags):    
-    with open(fileName, 'r') as original: data = original.read()
-    with open(fileName, 'w') as modified: 
-        for tag in listOfTags:
-            if tag not in data:
-                modified.write(tag + "\n")
-        modified.write(data)
+    if exists(fileName):
+        with open(fileName, 'r') as original: data = original.read()
+        with open(fileName, 'w') as modified: 
+            for tag in listOfTags:
+                if tag not in data:
+                    modified.write(tag + "\n")
+            modified.write(data)
         
 def findFiles(presentFiles, searchString):
     results = []
@@ -52,8 +55,9 @@ def findFiles(presentFiles, searchString):
         if (fileBaseName.find(searchString) != -1):
             results.append(file)
         else:
-            with open(file, 'r') as candidate: 
-                fileContent = candidate.read()
-                if (fileContent.find(searchString) != -1):
-                    results.append(file)
+            if exists(file):
+                with open(file, 'r') as candidate: 
+                    fileContent = candidate.read()
+                    if (fileContent.find(searchString) != -1):
+                        results.append(file)
     return results

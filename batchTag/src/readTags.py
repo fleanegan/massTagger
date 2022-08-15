@@ -44,3 +44,16 @@ def addTags(fileName, listOfTags):
             if tag not in data:
                 modified.write(tag + "\n")
         modified.write(data)
+        
+def findFiles(presentFiles, searchString):
+    results = []
+    for file in presentFiles:
+        fileBaseName = os.path.basename(file)
+        if (fileBaseName.find(searchString) != -1):
+            results.append(file)
+        else:
+            with open(file, 'r') as candidate: 
+                fileContent = candidate.read()
+                if (fileContent.find(searchString) != -1):
+                    results.append(file)
+    return results

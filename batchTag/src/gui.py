@@ -6,6 +6,7 @@ from batchTag.src.readTags import listFilesInDir
 from batchTag.src.readTags import collectPresentTags
 from batchTag.src.readTags import deleteTags
 from batchTag.src.readTags import addTags
+from batchTag.src.readTags import findFiles
 from tkinter import filedialog
 
 
@@ -128,6 +129,9 @@ class FileView:
         return 'break'
     def insert(self, fileName):
         self.tree.insert("", tk.END, text=fileName)
+    def empty(self):
+        for item in self.tree.get_children():
+            self.tree.delete(item)
     def clearSelection(self):
         for item in self.tree.selection():
             self.tree.selection_remove(item)
@@ -143,16 +147,18 @@ class Gui:
         self.window.geometry("1200x800")
         self.window.grid_columnconfigure(1,weight=1)
         self.window.grid_rowconfigure(1,weight=1)
-        self.window.grid_rowconfigure(2,weight=2)
+        self.window.grid_rowconfigure(3,weight=2)
         self.tagSearchBox = TagSearchBox(self.window)
         self.availableTagView = TagListView(self.window)
-        self.selectedTagView= TagListView(self.window)
+        self.fileSearchBox = TagSearchBox(self.window)
+        self.fileSearchBox.setPosition(2, 1)
         self.fileView = FileView(self.window)      
+        self.selectedTagView= TagListView(self.window)
         self.fileView.tree.focus_set()
         self.tagSearchBox.setPosition(0, 1)
-        self.selectedTagView.setPosition(2, 2)
+        self.selectedTagView.setPosition(3, 2)
         self.availableTagView.setPosition(1, 1)
-        self.fileView.setPosition(2, 1)
+        self.fileView.setPosition(3, 1)
         self.buttonBox = ButtonBox(self.window)
         self.buttonBox.setPosition(1, 2)
         self.window.config(highlightbackground = "red", highlightcolor= "red")
@@ -165,7 +171,7 @@ class GuiPresenter:
         self.gui = Gui()
         self.filesInCurrentWorkingDirectory = listFilesInDir(workingDir)
         self.bindings()
-        self.populateFileView()
+        self.populateFileView(self.filesInCurrentWorkingDirectory)
         self.clearTagSelection()
         self.gui.initFocus()
         self.gui.window.mainloop()
@@ -219,12 +225,18 @@ class GuiPresenter:
             if(re.findall(searchString,element,re.IGNORECASE) and not self.gui.selectedTagView.inList(element)):
                 elements.append(element)
         self.gui.availableTagView.populate(elements)
-    def populateFileView(self):
-        for file in self.filesInCurrentWorkingDirectory:
+    def populateFileView(self, event=None):
+        fileList = self.filesInCurrentWorkingDirectory
+        if event is not None:
+            fileList = findFiles(fileList, self.gui.fileSearchBox.get())
+        self.gui.fileView.empty()
+        for file in fileList:
             self.gui.fileView.insert(file)
+        self.gui.initFocus()
     def bindings(self):
         self.gui.availableTagView.bind('<Escape>', self.moveTagSelectionUp)
         self.gui.availableTagView.bind('<Return>', self.selectTag)
+        self.gui.fileSearchBox.bind('<Return>', self.populateFileView)
         self.gui.tagSearchBox.bind('<Return>', self.enterNewTag)
         self.gui.tagSearchBox.bind('<Down>', self.moveTagSelectionDown)
         self.gui.selectedTagView.bind('<BackSpace>', self.gui.selectedTagView.deleteSelectedElement)

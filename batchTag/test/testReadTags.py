@@ -4,6 +4,7 @@ from batchTag.src.readTags import listFilesInDir
 from batchTag.src.readTags import collectPresentTags
 from batchTag.src.readTags import deleteTags
 from batchTag.src.readTags import addTags
+from batchTag.src.readTags import findFiles
 import os
 
 def createFile(fileName, content):
@@ -16,7 +17,7 @@ testDirectory = "batchTag/test/assets/dummyDir/"
 class TestGetTags(unittest.TestCase):
     def test_getFileNames(self):
         result = listFilesInDir(testDirectory)
-        self.assertEqual(len(result), 2)
+        self.assertEqual(len(result), 5)
     def test_getPresentTags(self):
         files = listFilesInDir(testDirectory)
         result = collectPresentTags(files)
@@ -88,6 +89,28 @@ class TestAddTags(unittest.TestCase):
         file.close()
         os.remove(os.path.abspath(testFileName)) 
         
+def getStringsContainingSub(inList, searchString):
+    return [s for s in inList if searchString in s]
+        
+class FindFiles(unittest.TestCase):
+    def test_FileBySearchingFileName(self):
+        searchString = "ByNa"
+        presentFiles = listFilesInDir(testDirectory)
+        foundFiles = findFiles(presentFiles, searchString)
+        self.assertEqual(len(foundFiles), 1)
+        self.assertEqual(os.path.basename(foundFiles[0]), "ByName.md")
+    def test_FileBySearchingFileContent(self):
+        searchString = "is"
+        presentFiles = listFilesInDir(testDirectory)
+        foundFiles = findFiles(presentFiles, searchString)
+        self.assertEqual(len(foundFiles), 2)
+        self.assertEqual(len(getStringsContainingSub(foundFiles, "a.md")), 1)
+        self.assertEqual(len(getStringsContainingSub(foundFiles, "find.md")), 1)
+    def test_DoNotSearchInFilePath(self):
+        searchString = "assets"
+        presentFiles = listFilesInDir(testDirectory)
+        foundFiles = findFiles(presentFiles, searchString)
+        self.assertEqual(len(foundFiles), 0)
 
 if __name__ == '__main__':
     unittest.main()
